@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="container panel wide"><h1>Notifications</h1>
+  {% for n in items %}<div class="card" style="margin-bottom:.6rem"><strong>{% if n.url %}<a href="{{ n.url }}">{{ n.title }}</a>{% else %}{{ n.title }}{% endif %}</strong><div class="muted small">{{ n.body }}</div><div class="small muted">{{ n.created_at|date:"j M Y, H:i" }}</div></div>
+  {% empty %}<div class="empty">You're all caught up.</div>{% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Your profile{% endblock %}
+{% block content %}
+<div class="container panel wide">
+  <h1>Your profile</h1>
+  <div class="card">
+    <form method="post">{% csrf_token %}{% include "partials/form.html" %}<button class="btn" type="submit">Save changes</button></form>
+  </div>
+  <div class="card" style="margin-top:1rem">
+    <h2>Selling</h2>
+    {% if user.can_sell %}<p>You can sell books. <a href="{% url 'dashboard:home' %}">Open your dashboard</a></p>
+    {% elif pending_application %}<p>Your author application is awaiting review.</p>
+    {% else %}<p>Want to publish your own books? <a class="btn btn-sm" href="{% url 'accounts:become_author' %}">Apply to become an author</a></p>{% endif %}
+  </div>
+  <p><a href="{% url 'orders:order_list' %}">Order history</a></p>
+</div>
+{% endblock %}

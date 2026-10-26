@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Reading {{ book.title }}{% endblock %}
+{% block content %}
+<div class="reader-bar" role="toolbar" aria-label="Reader controls">
+  <a class="btn btn-ghost btn-sm" href="{% url 'library:home' %}">← Library</a>
+  <strong class="grow">{{ book.title }}</strong>
+  <button class="btn btn-ghost btn-sm" id="prev" type="button">‹ Prev</button>
+  <label class="skip-link" for="pageNum">Page</label>
+  <input id="pageNum" type="number" min="1" value="1" style="width:5rem">
+  <span class="muted small">/ <span id="pageCount">…</span></span>
+  <button class="btn btn-ghost btn-sm" id="next" type="button">Next ›</button>
+  <button class="btn btn-ghost btn-sm" id="zoomOut" type="button" aria-label="Zoom out">A−</button>
+  <button class="btn btn-ghost btn-sm" id="zoomIn" type="button" aria-label="Zoom in">A+</button>
+</div>
+<div class="progress"><span id="bar"></span></div>
+<div id="pdf-wrap"><canvas id="pdf-canvas" aria-label="Page of {{ book.title }}"></canvas></div>
+<p id="status" class="small muted" role="status" style="text-align:center">Loading…</p>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+(function () {
+  var fileUrl = "{% url 'library:stream' book.slug %}", progressUrl = "{% url 'library:progress' book.slug %}";
+  var startPage = parseInt("{{ progress.location|default:'1' }}", 10) || 1;
+  var scale = ({{ progress.font_scale|default:100 }}) / 100 * 1.3;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  var pdf = null, page = startPage, canvas = document.getElementById("pdf-canvas"), ctx = canvas.getContext("2d"), rendering = false, pending = null, t = null;
+  function render(n) {
+    if (rendering) { pending = n; return; }
+    rendering = true;
+    pdf.getPage(n).then(function (p) {
+      var vp = p.getViewport({ scale: scale });
+      canvas.width = vp.width; canvas.height = vp.height;
+      return p.render({ canvasContext: ctx, viewport: vp }).promise;
+    }).then(function () {
+      rendering = false; document.getElementById("pageNum").value = n;
+      document.getElementById("bar").style.width = (n / pdf.numPages * 100) + "%";
+      document.getElementById("status").textContent = "";
+      if (pending !== null) { var q = pending; pending = null; render(q); }
+      clearTimeout(t); t = setTimeout(function () { saveProgress(progressUrl, { location: String(n), percent: n / pdf.numPages * 100, font_scale: Math.round(scale / 1.3 * 100) }); }, 800);
+    });
+  }
+  function go(n) { page = Math.min(Math.max(1, n), pdf.numPages); render(page); }
+  pdfjsLib.getDocument({ url: fileUrl, withCredentials: true }).promise.then(function (doc) {
+    pdf = doc; document.getElementById("pageCount").textContent = doc.numPages; document.getElementById("pageNum").max = doc.numPages; go(page);
+  }).catch(function () { document.getElementById("status").textContent = "We couldn't open this book. Please go back and try again."; });
+  document.getElementById("prev").onclick = function () { go(page - 1); };
+  document.getElementById("next").onclick = function () { go(page + 1); };
+  document.getElementById("pageNum").onchange = function (e) { go(parseInt(e.target.value, 10) || 1); };
+  document.getElementById("zoomIn").onclick = function () { scale = Math.min(scale + 0.2, 3.5); render(page); };
+  document.getElementById("zoomOut").onclick = function () { scale = Math.max(scale - 0.2, 0.6); render(page); };
+  document.addEventListener("keydown", function (e) {
+    if (e.target.tagName === "INPUT") return;
+    if (e.key === "ArrowRight") go(page + 1);
+    if (e.key === "ArrowLeft") go(page - 1);
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Flagged reviews{% endblock %}
+{% block content %}
+<div class="container"><div class="page-title"><h1>Flagged reviews</h1></div>{% include "dashboard/_adminnav.html" %}
+  {% for r in reviews %}<div class="card" style="margin-bottom:.7rem"><strong>{{ r.book.title }}</strong> · {{ r.rating }}★ · {{ r.user.public_name }} · {{ r.report_count }} report{{ r.report_count|pluralize }}
+    <p style="white-space:pre-line">{{ r.text }}</p>
+    <form method="post" class="toolbar">{% csrf_token %}<button class="btn btn-danger btn-sm" formaction="{% url 'dashboard:review_moderate' r.pk 'hide' %}">Hide</button><button class="btn btn-ghost btn-sm" formaction="{% url 'dashboard:review_moderate' r.pk 'restore' %}">Keep published</button></form></div>
+  {% empty %}<div class="empty">No flagged reviews.</div>{% endfor %}
+</div>
+{% endblock %}

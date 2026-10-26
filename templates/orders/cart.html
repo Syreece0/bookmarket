@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Your cart{% endblock %}
+{% block content %}
+<div class="container panel wide" style="max-width:860px">
+  <h1>Your cart</h1>
+  {% if books %}
+  <div class="card table-wrap"><table class="data">
+    <thead><tr><th>Book</th><th class="num">Price</th><th></th></tr></thead>
+    <tbody>{% for b in books %}
+      <tr><td><a href="{{ b.get_absolute_url }}"><strong>{{ b.title }}</strong></a><br><span class="small muted">{{ b.author_name }}</span>{% if b.pk in owned %}<br><span class="tag warn">Already in your library, not charged</span>{% endif %}</td>
+        <td class="num">{{ b.price|money:b.currency }}</td>
+        <td><form method="post" action="{% url 'orders:cart_remove' b.pk %}" class="inline">{% csrf_token %}<button class="btn btn-ghost btn-sm">Remove</button></form></td></tr>
+    {% endfor %}</tbody>
+    <tfoot><tr><td><strong>Total</strong></td><td class="num"><strong>{{ total|money:books.0.currency }}</strong></td><td></td></tr></tfoot>
+  </table></div>
+  <div style="margin-top:1rem">
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'orders:checkout' %}">{% csrf_token %}<button class="btn" type="submit">Pay securely</button></form>
+    <p class="small muted">You'll be redirected to our payment provider. We never see or store your card details.</p>
+    {% else %}<a class="btn" href="{% url 'accounts:login' %}?next={% url 'orders:cart' %}">Log in to check out</a>{% endif %}
+  </div>
+  {% else %}<div class="empty"><p>Your cart is empty.</p><a class="btn" href="{% url 'catalog:list' %}">Find a book</a></div>{% endif %}
+</div>
+{% endblock %}

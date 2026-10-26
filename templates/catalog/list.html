@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-title"><h1>{{ title }}{% if q %} <span class="muted small">for “{{ q }}”</span>{% endif %}</h1></div>
+  <div class="split">
+    <aside aria-label="Filters" class="card">
+      <h2 style="font-size:1rem">Browse</h2>
+      <ul class="filter-list">
+        <li><a href="{% url 'catalog:kind' 'fiction' %}"{% if kind == 'fiction' %} aria-current="page"{% endif %}><strong>Fiction</strong></a></li>
+        <li><a href="{% url 'catalog:kind' 'nonfiction' %}"{% if kind == 'nonfiction' %} aria-current="page"{% endif %}><strong>Nonfiction</strong></a></li>
+      </ul>
+      <h2 style="font-size:1rem;margin-top:1rem">Categories</h2>
+      <ul class="filter-list">
+        {% for c in categories %}
+        <li><a href="{{ c.get_absolute_url }}">{{ c.name }}</a>
+          {% if c.children.all %}<ul>{% for ch in c.children.all %}<li><a href="{{ ch.get_absolute_url }}">{{ ch.name }}</a></li>{% endfor %}</ul>{% endif %}</li>
+        {% endfor %}
+      </ul>
+      <form method="get" style="margin-top:1rem">
+        <input type="hidden" name="q" value="{{ q }}">
+        <div class="field"><label for="price">Price</label>
+          <select id="price" name="price"><option value="">Any</option><option value="free" {% if price == 'free' %}selected{% endif %}>Free</option><option value="paid" {% if price == 'paid' %}selected{% endif %}>Paid</option></select></div>
+        <div class="field"><label for="sort">Sort by</label>
+          <select id="sort" name="sort">{% for k, v in sorts.items %}<option value="{{ k }}" {% if sort == k %}selected{% endif %}>{{ v.1 }}</option>{% endfor %}</select></div>
+        <button class="btn btn-sm btn-block" type="submit">Apply</button>
+      </form>
+    </aside>
+    <section aria-label="Results">
+      {% if page.object_list %}
+      <div class="grid grid-books">{% for book in page.object_list %}{% include "partials/book_card.html" %}{% endfor %}</div>
+      <nav class="pagination" aria-label="Pagination">
+        {% if page.has_previous %}<a class="btn btn-ghost btn-sm" href="?{{ querystring }}&page={{ page.previous_page_number }}">← Previous</a>{% endif %}
+        <span class="muted small">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}<a class="btn btn-ghost btn-sm" href="?{{ querystring }}&page={{ page.next_page_number }}">Next →</a>{% endif %}
+      </nav>
+      {% else %}<div class="empty"><p>No books match your search yet.</p><a class="btn btn-ghost" href="{% url 'catalog:list' %}">Clear filters</a></div>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

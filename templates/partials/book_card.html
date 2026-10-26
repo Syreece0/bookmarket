@@ -1,0 +1,10 @@
+{% load money %}
+<article class="book-card">
+  <a href="{{ book.get_absolute_url }}" class="cover" aria-label="{{ book.title }} by {{ book.author_name }}">
+    <img src="{{ book.cover.url }}" alt="Cover of {{ book.title }}" loading="lazy" width="300" height="450">
+    {% if book.is_free %}<span class="tag ok ribbon">Free</span>{% endif %}
+  </a>
+  <h3 class="t"><a href="{{ book.get_absolute_url }}">{{ book.title }}</a></h3>
+  <p class="a">{{ book.author_name }}</p>
+  <p class="price">{{ book|price_or_free }}</p>
+</article>

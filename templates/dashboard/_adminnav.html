@@ -1,0 +1,6 @@
+<nav class="subnav" aria-label="Administration" style="margin-bottom:1rem;border:1px solid var(--border);border-radius:10px"><div class="container">
+  <a href="{% url 'dashboard:platform' %}">Overview</a><a href="{% url 'dashboard:personal' %}">My book sales</a>
+  <a href="{% url 'dashboard:applications' %}">Author applications</a><a href="{% url 'dashboard:book_queue' %}">Book approvals</a>
+  <a href="{% url 'dashboard:sales' %}">Sales &amp; refunds</a><a href="{% url 'dashboard:payout_queue' %}">Payouts</a>
+  <a href="{% url 'dashboard:reviews' %}">Reviews</a><a href="{% url 'dashboard:audit' %}">Audit log</a><a href="/admin/">Django admin</a>
+</div></nav>

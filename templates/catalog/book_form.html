@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{% if editing %}Edit book{% else %}Upload a book{% endif %}{% endblock %}
+{% block content %}
+<div class="container panel wide">
+  <h1>{% if editing %}Edit “{{ book.title }}”{% else %}Upload a book{% endif %}</h1>
+  {% if not user.is_platform_admin %}<p class="muted">New books and edits are reviewed before they go live. PDF and EPUB files are accepted; other formats are rejected.</p>{% endif %}
+  <form class="card" method="post" enctype="multipart/form-data">{% csrf_token %}
+    {% include "partials/form.html" %}
+    <button class="btn" type="submit">{% if user.is_platform_admin %}Publish{% else %}Submit for review{% endif %}</button>
+    <a class="btn btn-ghost" href="{% url 'dashboard:my_books' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

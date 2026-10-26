@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Wishlist{% endblock %}
+{% block content %}
+<div class="container"><div class="page-title"><h1>Your wishlist</h1></div>
+  {% if items %}<div class="grid grid-books">{% for i in items %}{% with book=i.book %}
+    <div>{% include "partials/book_card.html" %}
+      <form method="post" action="{% url 'engagement:wishlist_toggle' book.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'engagement:wishlist' %}"><button class="btn btn-ghost btn-sm" type="submit">Remove</button></form></div>
+  {% endwith %}{% endfor %}</div>
+  {% else %}<div class="empty"><p>Nothing saved yet. Tap “Wishlist” on any book to save it.</p><a class="btn" href="{% url 'catalog:list' %}">Browse books</a></div>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+<div class="period-bar" role="navigation" aria-label="Date range">
+  {% for k, label in periods %}{% if k != 'custom' %}<a href="?period={{ k }}" {% if period == k %}aria-current="true"{% endif %}>{{ label }}</a>{% endif %}{% endfor %}
+  <form method="get"><input type="hidden" name="period" value="custom">
+    <div><label for="start">From</label><input id="start" type="date" name="start" value="{{ start }}" required></div>
+    <div><label for="end">To</label><input id="end" type="date" name="end" value="{{ end }}" required></div>
+    <button class="btn btn-sm {% if period == 'custom' %}{% else %}btn-ghost{% endif %}" type="submit">Apply</button></form>
+</div>

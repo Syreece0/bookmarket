@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Payouts{% endblock %}
+{% block content %}
+<div class="container"><div class="page-title"><h1>Payout requests</h1>
+  <p class="muted small">Pay authors from your bank or payment provider, then enter the transfer reference. A payout is only recorded as paid once you confirm it with a reference.</p></div>{% include "dashboard/_adminnav.html" %}
+  {% for p in payouts %}
+  <div class="card" style="margin-bottom:.8rem"><strong>#{{ p.pk }} · {{ p.seller.public_name }}</strong> <span class="tag {% if p.status == 'paid' %}ok{% elif p.status in 'failed rejected cancelled' %}bad{% else %}warn{% endif %}">{{ p.get_status_display }}</span>
+    <div>{{ p.amount|money:p.currency }} <span class="small muted">· requested {{ p.requested_at|date:"j M Y H:i" }}</span></div>
+    <div class="small muted">{{ p.destination_snapshot }}</div>
+    {% if p.provider_reference %}<div class="small muted">Reference: {{ p.provider_reference }}</div>{% endif %}
+    {% if p.status in 'pending approved processing' %}
+    <form method="post" class="toolbar" style="margin-top:.6rem" id="pf{{ p.pk }}">{% csrf_token %}
+      <input type="text" name="reference" placeholder="Transfer reference (needed for Paid)" style="width:240px" aria-label="Transfer reference">
+      <input type="text" name="note" placeholder="Note" style="width:200px" aria-label="Note">
+      {% if p.status == 'pending' %}<button class="btn btn-sm" formaction="{% url 'dashboard:payout_action' p.pk 'approve' %}">Approve</button><button class="btn btn-danger btn-sm" formaction="{% url 'dashboard:payout_action' p.pk 'reject' %}">Reject</button>{% endif %}
+      {% if p.status == 'approved' %}<button class="btn btn-sm" formaction="{% url 'dashboard:payout_action' p.pk 'processing' %}">Mark processing</button>{% endif %}
+      {% if p.status == 'processing' %}<button class="btn btn-sm" formaction="{% url 'dashboard:payout_action' p.pk 'paid' %}">Mark paid</button>{% endif %}
+      {% if p.status != 'pending' %}<button class="btn btn-danger btn-sm" formaction="{% url 'dashboard:payout_action' p.pk 'failed' %}">Mark failed</button>{% endif %}
+    </form>{% endif %}
+  </div>{% empty %}<div class="empty">No payout requests.</div>{% endfor %}
+  <div class="card"><h2>Manual adjustment</h2><p class="small muted">Corrections are posted as new ledger entries with a reason and are recorded in the audit log. Existing entries are never edited.</p>
+    <form method="post" action="{% url 'dashboard:adjustment' %}">{% csrf_token %}{% include "partials/form.html" with form=adjustment_form %}<button class="btn btn-sm">Post adjustment</button></form></div>
+</div>
+{% endblock %}

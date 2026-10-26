@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{% if personal %}My book sales{% else %}Author dashboard{% endif %}{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-title"><h1>{% if personal %}My personal book sales{% else %}Author dashboard{% endif %}</h1>
+    <p class="muted small">{% if personal %}Your own books only. This is separate from platform-wide analytics. No platform commission applies to your personal sales.{% else %}Only your own books and sales are shown here.{% endif %}</p></div>
+  {% if user.is_platform_admin %}{% include "dashboard/_adminnav.html" %}{% endif %}
+  <div class="toolbar"><a class="btn btn-sm" href="{% url 'catalog:create' %}">Upload a book</a><a class="btn btn-sm btn-ghost" href="{% url 'dashboard:my_books' %}">My books</a><a class="btn btn-sm btn-ghost" href="{% url 'dashboard:payouts' %}">Earnings &amp; payouts</a></div>
+  {% include "dashboard/_period.html" %}
+  <p class="small muted">Showing: {{ period_label }}</p>
+
+  <div class="stats">
+    <div class="stat"><div class="k">Books</div><div class="v">{{ book_counts.total }}</div><div class="n">{{ book_counts.published }} published · {{ book_counts.pending }} pending · {{ book_counts.rejected }} rejected</div></div>
+    <div class="stat"><div class="k">Units sold</div><div class="v">{{ units }}</div></div>
+    <div class="stat"><div class="k">Gross sales</div><div class="v">{{ gross|money }}</div></div>
+    {% if not personal %}<div class="stat"><div class="k">Platform commission</div><div class="v">{{ commission|money }}</div></div>{% endif %}
+    <div class="stat"><div class="k">Refunds</div><div class="v">{{ refunds|money }}</div></div>
+    <div class="stat"><div class="k">{% if personal %}Payment fees{% else %}Fees charged to you{% endif %}</div><div class="v">{% if personal %}{{ payment_fees|money }}{% else %}{{ fees_seller|money }}{% endif %}</div></div>
+    <div class="stat"><div class="k">{% if personal %}Net revenue{% else %}Net earnings{% endif %}</div><div class="v">{{ net|money }}</div><div class="n">after commission, fee share, refunds and adjustments</div></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="k">Pending earnings</div><div class="v">{{ balances.pending|money }}</div><div class="n">still in the payout hold period</div></div>
+    <div class="stat"><div class="k">Available balance</div><div class="v">{{ balances.withdrawable|money }}</div></div>
+    <div class="stat"><div class="k">Total paid out</div><div class="v">{{ balances.paid_out|money }}</div></div>
+  </div>
+
+  <div class="card"><h2>Sales over time</h2>
+    {% if chart.labels %}<div class="chart-box"><canvas id="salesChart" aria-label="Sales over time chart" role="img"></canvas></div>
+    {% else %}<p class="muted">No sales in this period yet.</p>{% endif %}
+  </div>
+  {{ chart|json_script:"chart-data" }}
+
+  <div class="split" style="grid-template-columns:1fr 1fr;margin-top:1rem">
+    <div class="card"><h2>Book performance</h2><div class="table-wrap"><table class="data"><thead><tr><th>Book</th><th class="num">Units</th><th class="num">Gross</th></tr></thead><tbody>
+      {% for b in per_book %}<tr><td>{{ b.book__title }}</td><td class="num">{{ b.units }}</td><td class="num">{{ b.gross|money }}</td></tr>{% empty %}<tr><td colspan="3" class="muted">No sales yet.</td></tr>{% endfor %}
+    </tbody></table></div></div>
+    <div class="card"><h2>Recent transactions</h2><div class="table-wrap"><table class="data"><thead><tr><th>Date</th><th>Book</th><th class="num">Amount</th></tr></thead><tbody>
+      {% for i in recent %}<tr><td>{{ i.order.paid_at|date:"j M, H:i" }}</td><td>{{ i.title_snapshot }}{% if i.refunded_at %} <span class="tag bad">Refunded</span>{% endif %}</td><td class="num">{{ i.unit_price|money:i.currency }}</td></tr>{% empty %}<tr><td colspan="3" class="muted">Nothing yet.</td></tr>{% endfor %}
+    </tbody></table></div></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function () {
+  var el = document.getElementById("salesChart"); if (!el || !window.Chart) return;
+  var d = JSON.parse(document.getElementById("chart-data").textContent);
+  new Chart(el, { type: "bar", data: { labels: d.labels, datasets: [{ label: "Sales", data: d.totals, backgroundColor: "#8b5cf6", borderRadius: 4 }] },
+    options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: "#a9a4bd" }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: "#a9a4bd" }, grid: { color: "rgba(255,255,255,.08)" } } } } });
+})();
+</script>
+{% endblock %}

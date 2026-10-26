@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Your orders{% endblock %}
+{% block content %}
+<div class="container panel wide" style="max-width:860px">
+  <h1>Your orders</h1>
+  {% for o in orders %}
+  <a class="card" href="{% url 'orders:order_detail' o.reference %}" style="display:block;margin-bottom:.7rem">
+    <strong>{{ o.reference }}</strong> <span class="tag {% if o.status == 'paid' %}ok{% elif o.status == 'pending' %}warn{% else %}bad{% endif %}">{{ o.get_status_display }}</span>
+    <div class="small muted">{{ o.created_at|date:"j M Y, H:i" }} · {{ o.total|money:o.currency }} · {{ o.items.count }} item{{ o.items.count|pluralize }}</div>
+  </a>
+  {% empty %}<div class="empty"><p>You haven't ordered anything yet.</p></div>{% endfor %}
+</div>
+{% endblock %}

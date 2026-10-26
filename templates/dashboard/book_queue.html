@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Book approvals{% endblock %}
+{% block content %}
+<div class="container"><div class="page-title"><h1>Books awaiting approval</h1></div>{% include "dashboard/_adminnav.html" %}
+  {% for b in books %}
+  <div class="card" style="margin-bottom:.8rem;display:grid;grid-template-columns:90px 1fr;gap:1rem">
+    <div class="cover"><img src="{{ b.cover.url }}" alt="Cover of {{ b.title }}" loading="lazy"></div>
+    <div><strong>{{ b.title }}</strong> <span class="small muted">by {{ b.author_name }} · seller {{ b.seller.email }}</span>
+      <div class="small muted">{{ b.category }} ({{ b.category.get_kind_display }}) · {{ b.get_file_format_display }} · {{ b.length_label }} · {{ b|price_or_free }}</div>
+      <p style="white-space:pre-line">{{ b.description|truncatewords:60 }}</p>
+      <div class="toolbar"><a class="btn btn-ghost btn-sm" href="{% url 'dashboard:book_review_file' b.pk %}" target="_blank" rel="noopener">Open submitted file</a>
+        <form method="post" action="{% url 'dashboard:book_decide' b.pk 'approve' %}">{% csrf_token %}<button class="btn btn-sm">Approve &amp; publish</button></form>
+        <form method="post" action="{% url 'dashboard:book_decide' b.pk 'reject' %}" class="toolbar">{% csrf_token %}<input type="text" name="reason" placeholder="Reason (sent to author)" required style="width:260px"><button class="btn btn-danger btn-sm">Reject</button></form></div></div>
+  </div>{% empty %}<div class="empty">Nothing waiting for review.</div>{% endfor %}
+</div>
+{% endblock %}

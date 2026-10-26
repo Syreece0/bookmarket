@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Become an author{% endblock %}
+{% block content %}
+<div class="container panel wide">
+  <h1>Apply to sell your books</h1>
+  <p class="muted">External authors keep the author share of each sale after the platform commission stated below. Approval is manual.</p>
+  <div class="card" style="margin-bottom:1rem">
+    <h2>{{ agreement.title }} (version {{ agreement.version }})</h2>
+    <p class="small muted">Platform commission disclosed in this version: {% widthratio agreement.commission_rate_disclosed 1 100 %}%</p>
+    <div style="max-height:260px;overflow:auto;white-space:pre-line" tabindex="0" aria-label="Agreement text">{{ agreement.body }}</div>
+  </div>
+  <form class="card" method="post">{% csrf_token %}{% include "partials/form.html" %}<button class="btn" type="submit">Submit application</button></form>
+</div>
+{% endblock %}

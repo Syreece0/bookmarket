@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<div class="container"><div class="page-title"><h1>Audit log</h1></div>{% include "dashboard/_adminnav.html" %}
+  <div class="card table-wrap"><table class="data"><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead><tbody>
+  {% for a in page.object_list %}<tr><td>{{ a.created_at|date:"j M Y H:i" }}</td><td>{{ a.actor.email|default:"system" }}</td><td>{{ a.action }}</td><td>{{ a.target }}</td><td class="small muted">{{ a.detail }}</td></tr>{% empty %}<tr><td colspan="5" class="muted">Nothing recorded yet.</td></tr>{% endfor %}</tbody></table></div>
+  <nav class="pagination">{% if page.has_previous %}<a class="btn btn-ghost btn-sm" href="?page={{ page.previous_page_number }}">← Newer</a>{% endif %}{% if page.has_next %}<a class="btn btn-ghost btn-sm" href="?page={{ page.next_page_number }}">Older →</a>{% endif %}</nav>
+</div>
+{% endblock %}

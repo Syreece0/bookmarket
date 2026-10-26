@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}My books{% endblock %}
+{% block content %}
+<div class="container"><div class="page-title"><h1>My books</h1></div>
+  <div class="toolbar"><a class="btn btn-sm" href="{% url 'catalog:create' %}">Upload a book</a><a class="btn btn-sm btn-ghost" href="{% url 'dashboard:home' %}">Back to dashboard</a></div>
+  <div class="card table-wrap"><table class="data"><thead><tr><th>Title</th><th>Category</th><th>Format</th><th class="num">Price</th><th>Status</th><th></th></tr></thead><tbody>
+  {% for b in books %}<tr><td><a href="{{ b.get_absolute_url }}">{{ b.title }}</a>{% if b.rejection_reason %}<div class="small muted">Reason: {{ b.rejection_reason }}</div>{% endif %}</td><td>{{ b.category }}</td><td>{{ b.get_file_format_display }}{% if b.length_label %} · {{ b.length_label }}{% endif %}</td><td class="num">{{ b|price_or_free }}</td>
+    <td><span class="tag {% if b.status == 'published' %}ok{% elif b.status == 'pending' %}warn{% elif b.status == 'rejected' %}bad{% endif %}">{{ b.get_status_display }}</span></td><td><a class="btn btn-ghost btn-sm" href="{% url 'catalog:edit' b.pk %}">Edit</a></td></tr>
+  {% empty %}<tr><td colspan="6" class="muted">You haven't uploaded any books yet.</td></tr>{% endfor %}
+  </tbody></table></div></div>
+{% endblock %}

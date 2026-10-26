@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="container panel wide">
+  <h1>{{ title }}</h1>
+  {% if body %}<div class="card" style="white-space:pre-line">{{ body }}</div>
+  {% else %}<p class="muted">This page has not been written yet. An administrator can add it under Site settings.</p>{% endif %}
+</div>
+{% endblock %}

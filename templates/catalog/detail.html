@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ book.title }}{% endblock %}
+{% block meta_description %}{{ book.description|truncatewords:30 }}{% endblock %}
+{% block content %}
+<div class="container">
+  {% if book.status != 'published' %}<p class="tag warn" role="status" style="margin-top:1rem">Status: {{ book.get_status_display }}{% if book.rejection_reason %} · {{ book.rejection_reason }}{% endif %}. Only you and administrators can see this page.</p>{% endif %}
+  <div class="detail">
+    <div><div class="cover"><img src="{{ book.cover.url }}" alt="Cover of {{ book.title }}" width="300" height="450"></div></div>
+    <div>
+      <p class="small muted"><a href="{{ book.category.get_absolute_url }}">{{ book.category }}</a> · {{ book.category.get_kind_display }}</p>
+      <h1>{{ book.title }}</h1>
+      <p>by <strong>{{ book.author_name }}</strong></p>
+      {% if rating_count %}<p><span class="stars" aria-hidden="true">{% for i in "12345" %}{% if forloop.counter <= rating_avg|floatformat:0|add:0 %}★{% else %}☆{% endif %}{% endfor %}</span> <span class="small muted">{{ rating_avg|floatformat:1 }} · {{ rating_count }} review{{ rating_count|pluralize }}</span></p>{% endif %}
+      <p class="small muted">{{ book.get_file_format_display }}{% if book.length_label %} · {{ book.length_label }}{% endif %} · {{ book.language }}</p>
+      <p class="price" style="font-size:1.8rem">{{ book|price_or_free }}</p>
+      <div class="toolbar">
+        {% if owned %}
+          <a class="btn" href="{% url 'library:read' book.slug %}">Read now</a>
+          <a class="btn btn-ghost" href="{% url 'library:download' book.slug %}">Download</a>
+        {% elif book.status == 'published' %}
+          {% if book.is_free %}
+            {% if user.is_authenticated %}<form method="post" action="{% url 'orders:claim_free' book.pk %}" class="inline">{% csrf_token %}<button class="btn" type="submit">Get for free</button></form>
+            {% else %}<a class="btn" href="{% url 'accounts:login' %}?next={{ request.path }}">Log in to get this free book</a>{% endif %}
+          {% elif in_cart %}<a class="btn" href="{% url 'orders:cart' %}">Go to cart</a>
+          {% else %}<form method="post" action="{% url 'orders:cart_add' book.pk %}" class="inline">{% csrf_token %}<button class="btn" type="submit">Add to cart</button></form>{% endif %}
+          {% if book.has_preview %}<a class="btn btn-ghost" href="{% url 'catalog:preview' book.slug %}" target="_blank" rel="noopener">Free preview</a>{% endif %}
+        {% endif %}
+        {% if user.is_authenticated and book.status == 'published' %}
+        <form method="post" action="{% url 'engagement:wishlist_toggle' book.pk %}" class="inline">{% csrf_token %}<button class="btn btn-ghost" type="submit">{% if in_wishlist %}♥ Saved{% else %}♡ Wishlist{% endif %}</button></form>
+        {% endif %}
+        {% if user.is_authenticated and book.seller_id == user.id %}<a class="btn btn-ghost" href="{% url 'catalog:edit' book.pk %}">Edit</a>{% endif %}
+      </div>
+      {% if book.file_format == 'epub' and not book.is_free and not owned %}<p class="small muted">EPUB samples are not available yet. The description below tells you what to expect.</p>{% endif %}
+      <h2 style="margin-top:1.5rem">About this book</h2>
+      <div style="white-space:pre-line">{{ book.description }}</div>
+    </div>
+  </div>
+
+  <section aria-labelledby="rev" class="section">
+    <h2 id="rev">Reader reviews</h2>
+    {% if can_review %}
+    <form class="card" method="post" action="{% url 'engagement:review_create' book.pk %}" style="margin-bottom:1rem">{% csrf_token %}
+      <div class="field"><label for="rating">Rating</label><select id="rating" name="rating">{% for n in "54321" %}<option value="{{ n }}">{{ n }} star{{ n|pluralize }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="text">Your review</label><textarea id="text" name="text" rows="4" maxlength="3000" required></textarea></div>
+      <button class="btn" type="submit">Post review</button>
+    </form>
+    {% endif %}
+    {% for r in reviews %}
+    <article class="card" style="margin-bottom:.7rem">
+      <div><span class="stars" aria-label="{{ r.rating }} out of 5">{% for i in "12345" %}{% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}</span> <strong>{{ r.user.public_name }}</strong> <span class="small muted">{{ r.created_at|date:"j M Y" }}</span></div>
+      <p style="white-space:pre-line">{{ r.text }}</p>
+      {% if user.is_authenticated and r.user_id != user.id %}
+      <form method="post" action="{% url 'engagement:review_report' r.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="reason" value="Reported by a reader"><button class="btn btn-ghost btn-sm" type="submit">Report</button></form>{% endif %}
+    </article>
+    {% empty %}<p class="muted">No reviews yet. Only readers who own the book can review it.</p>{% endfor %}
+  </section>
+
+  {% if related %}<section class="section"><h2>More in {{ book.category.name }}</h2>
+    <div class="grid grid-books">{% for book in related %}{% include "partials/book_card.html" %}{% endfor %}</div></section>{% endif %}
+</div>
+{% endblock %}

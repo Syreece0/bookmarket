@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Order {{ order.reference }}{% endblock %}
+{% block content %}
+<div class="container panel wide" style="max-width:860px">
+  <h1>Order {{ order.reference }}</h1>
+  <p><span class="tag {% if order.status == 'paid' %}ok{% elif order.status == 'pending' %}warn{% else %}bad{% endif %}">{{ order.get_status_display }}</span> · {{ order.created_at|date:"j M Y, H:i" }}</p>
+  <div class="card table-wrap"><table class="data">
+    <tbody>{% for i in order.items.all %}<tr><td>{{ i.title_snapshot }}{% if i.refunded_at %} <span class="tag bad">Refunded</span>{% endif %}</td><td class="num">{{ i.unit_price|money:i.currency }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><td><strong>Total</strong></td><td class="num"><strong>{{ order.total|money:order.currency }}</strong></td></tr></tfoot>
+  </table></div>
+  {% if order.status == 'pending' %}<p class="muted">Payment has not been confirmed. If you were charged, your library will update automatically once the provider confirms it.</p>{% endif %}
+  <p><a href="{% url 'library:home' %}">Go to my library</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Reading {{ book.title }}{% endblock %}
+{% block content %}
+<div class="reader-bar" role="toolbar" aria-label="Reader controls">
+  <a class="btn btn-ghost btn-sm" href="{% url 'library:home' %}">← Library</a>
+  <button class="btn btn-ghost btn-sm" id="tocBtn" type="button" aria-expanded="false" aria-controls="toc">Contents</button>
+  <strong class="grow">{{ book.title }}</strong>
+  <button class="btn btn-ghost btn-sm" id="prev" type="button">‹ Prev</button>
+  <button class="btn btn-ghost btn-sm" id="next" type="button">Next ›</button>
+  <button class="btn btn-ghost btn-sm" id="fontDown" type="button" aria-label="Smaller text">A−</button>
+  <button class="btn btn-ghost btn-sm" id="fontUp" type="button" aria-label="Larger text">A+</button>
+  <span class="muted small" id="pct" aria-live="polite"></span>
+</div>
+<div class="progress"><span id="bar"></span></div>
+<nav class="toc" id="toc" aria-label="Table of contents"><button class="btn btn-ghost btn-sm" id="tocClose" type="button">Close</button><div id="tocList"></div></nav>
+<div id="epub-area"></div>
+<p id="status" class="small muted" role="status" style="text-align:center">Loading…</p>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js"></script>
+<script>
+(function () {
+  var fileUrl = "{% url 'library:stream' book.slug %}", progressUrl = "{% url 'library:progress' book.slug %}";
+  var startCfi = "{{ progress.location|default:''|escapejs }}";
+  var font = {{ progress.font_scale|default:100 }}, bookObj, rendition, t = null, pct = 0;
+  fetch(fileUrl, { credentials: "same-origin" }).then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(function (buf) {
+    bookObj = ePub(buf);
+    rendition = bookObj.renderTo("epub-area", { width: "100%", height: "80vh", flow: "paginated", spread: "none" });
+    rendition.themes.fontSize(font + "%");
+    rendition.display(startCfi || undefined);
+    document.getElementById("status").textContent = "";
+    bookObj.loaded.navigation.then(function (nav) {
+      var list = document.getElementById("tocList");
+      nav.toc.forEach(function (item) {
+        var a = document.createElement("a"); a.href = "#"; a.textContent = item.label.trim();
+        a.onclick = function (e) { e.preventDefault(); rendition.display(item.href); document.getElementById("toc").classList.remove("open"); };
+        list.appendChild(a);
+      });
+    });
+    bookObj.ready.then(function () { return bookObj.locations.generate(1200); }).then(function () {
+      var cur = rendition.currentLocation(); if (cur && cur.start) update(cur.start.cfi);
+    });
+    rendition.on("relocated", function (loc) { update(loc.start.cfi); });
+  }).catch(function () { document.getElementById("status").textContent = "We couldn't open this book. Please go back and try again."; });
+  function update(cfi) {
+    if (bookObj.locations && bookObj.locations.length()) { pct = bookObj.locations.percentageFromCfi(cfi) * 100; }
+    document.getElementById("bar").style.width = pct + "%"; document.getElementById("pct").textContent = Math.round(pct) + "%";
+    clearTimeout(t); t = setTimeout(function () { saveProgress(progressUrl, { location: cfi, percent: pct, font_scale: font }); }, 800);
+  }
+  document.getElementById("prev").onclick = function () { rendition && rendition.prev(); };
+  document.getElementById("next").onclick = function () { rendition && rendition.next(); };
+  document.getElementById("fontUp").onclick = function () { font = Math.min(font + 10, 200); rendition.themes.fontSize(font + "%"); };
+  document.getElementById("fontDown").onclick = function () { font = Math.max(font - 10, 80); rendition.themes.fontSize(font + "%"); };
+  var toc = document.getElementById("toc"), btn = document.getElementById("tocBtn");
+  btn.onclick = function () { var o = toc.classList.toggle("open"); btn.setAttribute("aria-expanded", o); };
+  document.getElementById("tocClose").onclick = function () { toc.classList.remove("open"); btn.setAttribute("aria-expanded", false); };
+  document.addEventListener("keydown", function (e) { if (!rendition) return; if (e.key === "ArrowRight") rendition.next(); if (e.key === "ArrowLeft") rendition.prev(); });
+})();
+</script>
+{% endblock %}

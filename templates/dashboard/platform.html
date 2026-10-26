@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Platform dashboard{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-title"><h1>Platform dashboard</h1></div>
+  {% include "dashboard/_adminnav.html" %}
+  {% include "dashboard/_period.html" %}
+  <p class="small muted">Money figures cover: {{ period_label }}. People and queue counts are current totals.</p>
+  <h2>Community & queues</h2>
+  <div class="stats">
+    <div class="stat"><div class="k">Customers</div><div class="v">{{ customers }}</div></div>
+    <div class="stat"><div class="k">Authors</div><div class="v">{{ authors }}</div></div>
+    <div class="stat"><div class="k">Pending author applications</div><div class="v">{{ pending_apps }}</div><div class="n"><a href="{% url 'dashboard:applications' %}">Review</a></div></div>
+    <div class="stat"><div class="k">Published books</div><div class="v">{{ published_books }}</div></div>
+    <div class="stat"><div class="k">Pending book approvals</div><div class="v">{{ pending_books }}</div><div class="n"><a href="{% url 'dashboard:book_queue' %}">Review</a></div></div>
+    <div class="stat"><div class="k">Payout requests open</div><div class="v">{{ pending_payouts }}</div><div class="n"><a href="{% url 'dashboard:payout_queue' %}">Review</a></div></div>
+    <div class="stat"><div class="k">Flagged reviews</div><div class="v">{{ flagged_reviews }}</div></div>
+    <div class="stat"><div class="k">Completed paid orders (all time)</div><div class="v">{{ completed_orders }}</div></div>
+  </div>
+  <h2>Money</h2>
+  <div class="stats">
+    <div class="stat"><div class="k">Gross marketplace sales</div><div class="v">{{ gross_all|money }}</div><div class="n">All sellers, before refunds</div></div>
+    <div class="stat"><div class="k">External-author sales</div><div class="v">{{ gross_external|money }}</div></div>
+    <div class="stat"><div class="k">Your personal book sales</div><div class="v">{{ gross_admin|money }}</div><div class="n"><a href="{% url 'dashboard:personal' %}">Personal dashboard</a></div></div>
+    <div class="stat"><div class="k">Commission revenue</div><div class="v">{{ commission|money }}</div><div class="n">Net of reversals. This is revenue, not profit.</div></div>
+    <div class="stat"><div class="k">Payment fees borne by platform</div><div class="v">{{ platform_fees|money }}</div></div>
+    <div class="stat"><div class="k">Refunds</div><div class="v">{{ refunds|money }}</div></div>
+    <div class="stat"><div class="k">Chargebacks</div><div class="v">{{ chargebacks|money }}</div></div>
+    <div class="stat"><div class="k">Outstanding author earnings</div><div class="v">{{ author_liability|money }}</div><div class="n">Owed to authors (liability)</div></div>
+    <div class="stat"><div class="k">Completed payouts</div><div class="v">{{ paid_total|money }}</div></div>
+    <div class="stat"><div class="k">Failed payouts</div><div class="v">{{ failed_count }}</div><div class="n">{{ failed_total|money }}</div></div>
+  </div>
+  <p class="small muted">Gross sales and commission are not profit: hosting, staff, taxes and other expenses are not included here.</p>
+</div>
+{% endblock %}

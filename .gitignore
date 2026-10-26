@@ -1,0 +1,11 @@
+.env
+*.pyc
+__pycache__/
+db.sqlite3
+media/
+private_media/
+staticfiles/
+.venv/
+venv/
+*.log
+'n*py[cod]

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Earnings & payouts{% endblock %}
+{% block content %}
+<div class="container"><div class="page-title"><h1>Earnings &amp; payouts</h1></div>
+  <div class="stats">
+    <div class="stat"><div class="k">Available to withdraw</div><div class="v">{{ balances.withdrawable|money }}</div></div>
+    <div class="stat"><div class="k">Pending (in hold period)</div><div class="v">{{ balances.pending|money }}</div></div>
+    <div class="stat"><div class="k">Total paid out</div><div class="v">{{ balances.paid_out|money }}</div></div>
+  </div>
+  <div class="split" style="grid-template-columns:1fr 1fr">
+    <div class="card"><h2>Bank details</h2>
+      {% if account %}<p class="small muted">Saved: {{ account.bank_name }} · {{ account.masked_number }} · {{ account.account_name }}</p>{% endif %}
+      <form method="post" action="{% url 'dashboard:payout_account' %}">{% csrf_token %}{% include "partials/form.html" with form=account_form %}<button class="btn btn-sm" type="submit">Save bank details</button></form></div>
+    <div class="card"><h2>Request a payout</h2>
+      {% if account %}<form method="post" action="{% url 'dashboard:payout_request' %}">{% csrf_token %}{% include "partials/form.html" with form=request_form %}<button class="btn btn-sm" type="submit">Request payout</button></form>
+      <p class="small muted">Requests are reviewed by an administrator and are only marked paid after the transfer is confirmed.</p>
+      {% else %}<p class="muted">Add your bank details first.</p>{% endif %}</div>
+  </div>
+  <div class="card" style="margin-top:1rem"><h2>Payout requests</h2><div class="table-wrap"><table class="data"><thead><tr><th>#</th><th>Requested</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for p in requests %}<tr><td>{{ p.pk }}</td><td>{{ p.requested_at|date:"j M Y" }}</td><td class="num">{{ p.amount|money:p.currency }}</td><td><span class="tag {% if p.status == 'paid' %}ok{% elif p.status in 'failed rejected cancelled' %}bad{% else %}warn{% endif %}">{{ p.get_status_display }}</span>{% if p.provider_reference %}<div class="small muted">Ref: {{ p.provider_reference }}</div>{% endif %}</td>
+      <td>{% if p.status == 'pending' %}<form method="post" action="{% url 'dashboard:payout_cancel' p.pk %}" class="inline">{% csrf_token %}<button class="btn btn-ghost btn-sm">Cancel</button></form>{% endif %}</td></tr>
+    {% empty %}<tr><td colspan="5" class="muted">No payout requests yet.</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="card" style="margin-top:1rem"><h2>Earnings ledger</h2><div class="table-wrap"><table class="data"><thead><tr><th>Date</th><th>Type</th><th>Note</th><th class="num">Amount</th></tr></thead><tbody>
+    {% for e in entries %}<tr><td>{{ e.created_at|date:"j M Y" }}</td><td>{{ e.get_kind_display }}</td><td class="small muted">{{ e.note }}</td><td class="num">{{ e.amount|money:e.currency }}</td></tr>{% empty %}<tr><td colspan="4" class="muted">No entries yet.</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+{% endblock %}

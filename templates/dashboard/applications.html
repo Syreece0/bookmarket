@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Author applications{% endblock %}
+{% block content %}
+<div class="container"><div class="page-title"><h1>Author applications</h1></div>{% include "dashboard/_adminnav.html" %}
+  {% for a in applications %}
+  <div class="card" style="margin-bottom:.8rem"><strong>{{ a.pen_name }}</strong> <span class="small muted">({{ a.user.email }})</span> <span class="tag {% if a.status == 'approved' %}ok{% elif a.status == 'rejected' %}bad{% else %}warn{% endif %}">{{ a.get_status_display }}</span>
+    <p style="white-space:pre-line">{{ a.bio }}</p><p class="small muted">{{ a.genres }} {% if a.sample_url %}· <a href="{{ a.sample_url }}" rel="noopener nofollow" target="_blank">Sample</a>{% endif %}</p>
+    {% if a.status == 'pending' %}
+    <div class="toolbar"><form method="post" action="{% url 'dashboard:application_decide' a.pk 'approve' %}">{% csrf_token %}<button class="btn btn-sm">Approve</button></form>
+      <form method="post" action="{% url 'dashboard:application_decide' a.pk 'reject' %}" class="toolbar">{% csrf_token %}<input type="text" name="reason" placeholder="Reason for rejection" required style="width:260px"><button class="btn btn-danger btn-sm">Reject</button></form></div>
+    {% elif a.decision_note %}<p class="small muted">Note: {{ a.decision_note }}</p>{% endif %}
+  </div>{% empty %}<div class="empty">No applications yet.</div>{% endfor %}
+</div>
+{% endblock %}
