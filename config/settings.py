@@ -131,8 +131,9 @@ STORAGES = {
 
 if DEBUG:
     STORAGES["staticfiles"] = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
-       if os.environ.get("CLOUDINARY_URL"):
-       STORAGES["default"] = {"BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage"}
+    
+if os.environ.get("CLOUDINARY_URL"):
+    STORAGES["default"] = {"BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage"}
 
 if USE_S3:
     AWS_STORAGE_BUCKET_NAME = os.environ["AWS_STORAGE_BUCKET_NAME"]
